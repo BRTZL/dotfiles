@@ -31,3 +31,6 @@ esac
 # Bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Local binaries
+export PATH="$PATH:$HOME/.local/bin"
