@@ -1,0 +1,6 @@
+# macOS Option key as Alt for word navigation
+macos-option-as-alt = true
+
+# Cmd+Arrow for line navigation
+keybind = super+left=text:\x1bOH
+keybind = super+right=text:\x1bOF
