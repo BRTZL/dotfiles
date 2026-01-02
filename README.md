@@ -13,6 +13,7 @@ My macOS dotfiles.
 ├── install.sh               # Installation script
 └── zsh/
     ├── .zshrc               # Main zsh config
+    ├── .p10k.zsh            # Powerlevel10k theme
     ├── aliases.zsh          # Aliases
     ├── exports.zsh          # Environment variables & PATH
     ├── keybindings.zsh      # macOS-style key bindings
