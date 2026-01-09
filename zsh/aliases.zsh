@@ -16,3 +16,6 @@ alias svgcleanall="find . -type f -name \"*.svg\" | sudo xargs -I file svgcleane
 # Task Master
 alias tm='task-master'
 alias taskmaster='task-master'
+
+# Tailscale
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
