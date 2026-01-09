@@ -16,6 +16,7 @@ source "$DOTFILES/exports.zsh"
 source "$DOTFILES/aliases.zsh"
 source "$DOTFILES/tools.zsh"
 source "$DOTFILES/keybindings.zsh"
+source "$DOTFILES/completions.zsh"
 
 # p10k theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
