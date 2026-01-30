@@ -15,6 +15,7 @@ My macOS dotfiles.
     ├── .zshrc               # Main zsh config
     ├── .p10k.zsh            # Powerlevel10k theme
     ├── aliases.zsh          # Aliases
+    ├── completions.zsh      # Shell completions
     ├── exports.zsh          # Environment variables & PATH
     ├── keybindings.zsh      # macOS-style key bindings
     ├── plugins.zsh          # Oh-my-zsh plugins
@@ -73,11 +74,15 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$
 
 This will:
 - Create symlinks for all config files
-- Optionally install Homebrew packages from Brewfile
+- Optionally install Homebrew packages from Brewfile (including fonts)
 
-### 8. Install a Nerd Font (for terminal icons)
+### 8. Install fonts
 
-Download and install a [Nerd Font](https://www.nerdfonts.com/font-downloads) (e.g., MesloLGS NF), then set it as your terminal font.
+The terminal uses [Monaspace Krypton](https://monaspace.githubnext.com/) as the primary font and Symbols Nerd Font Mono for icons. Both are installed via the Brewfile, but you can also install them manually:
+
+```bash
+brew install --cask font-monaspace font-symbols-only-nerd-font
+```
 
 ### 9. Restart your terminal
 
@@ -95,15 +100,4 @@ brew bundle --file=~/.dotfiles/Brewfile
 
 ```bash
 brew bundle dump --file=~/.dotfiles/Brewfile --force
-```
-
-## Updating
-
-After making changes to your dotfiles:
-
-```bash
-cd ~/.dotfiles
-git add .
-git commit -m "Update dotfiles"
-git push
 ```

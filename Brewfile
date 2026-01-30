@@ -39,5 +39,9 @@ brew "tw93/tap/mole"
 brew "direnv"
 brew "powerlevel10k"
 
+# Fonts
+cask "font-monaspace"
+cask "font-symbols-only-nerd-font"
+
 # Casks
 cask "zulu@21"
