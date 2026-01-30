@@ -14,3 +14,6 @@ _opencode_yargs_completions() {
   fi
 }
 compdef _opencode_yargs_completions opencode
+
+# bun completions
+[ -s "/Users/bartuozel/.bun/_bun" ] && source "/Users/bartuozel/.bun/_bun"

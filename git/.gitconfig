@@ -4,7 +4,7 @@
 
 [core]
     editor = code --wait
-    pager = delta --show-syntax-themes
+	pager = delta
     excludesfile = ~/.gitignore_global
 
 [delta]
