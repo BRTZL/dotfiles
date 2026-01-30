@@ -20,3 +20,6 @@ source "$DOTFILES/completions.zsh"
 
 # p10k theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# bun completions
+[ -s "/Users/bartuozel/.bun/_bun" ] && source "/Users/bartuozel/.bun/_bun"

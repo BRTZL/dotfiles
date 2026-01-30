@@ -19,3 +19,6 @@ alias taskmaster='task-master'
 
 # Tailscale
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+
+# Claude
+alias ccask='claude -p'

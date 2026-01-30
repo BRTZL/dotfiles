@@ -1,3 +1,44 @@
+# Font stack
+font-family = "Monaspace Krypton"
+font-family = "Symbols Nerd Font Mono"
+
+font-size = 14
+font-thicken = true
+font-thicken-strength = 80
+
+# Font features
+font-feature = calt
+font-feature = -dlig
+
+# Theme
+theme = "Arcoiris"
+minimum-contrast = 2.5
+
+# Split clarity
+unfocused-split-opacity = 0.5
+unfocused-split-fill = "#000000"
+split-divider-color = "#666666"
+
+# Cursor
+cursor-style = bar
+cursor-opacity = 1
+cursor-style-blink = false
+
+# Safety and selection ergonomics
+clipboard-paste-protection = true
+selection-clear-on-copy = true
+selection-clear-on-typing = true
+right-click-action = copy-or-paste
+
+# Comfort
+window-padding-x = 6
+window-padding-y = 6
+window-padding-balance = true
+
+# Logs
+scrollback-limit = 268435456
+link-previews = true
+
 # macOS Option key as Alt for word navigation
 macos-option-as-alt = true
 
