@@ -20,3 +20,9 @@ source "$DOTFILES/completions.zsh"
 
 # p10k theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# opencode
+export PATH=/Users/bartuozel/.opencode/bin:$PATH
+
+# bun completions
+[ -s "/Users/bartuozel/.bun/_bun" ] && source "/Users/bartuozel/.bun/_bun"
