@@ -1,9 +1,7 @@
 # Taps
 tap "homebrew/cask-versions"
 tap "oven-sh/bun"
-tap "railwayapp/tap"
 tap "romkatv/powerlevel10k"
-tap "supabase/tap"
 tap "tw93/tap"
 
 # Core tools
@@ -29,7 +27,6 @@ brew "watchman"
 
 # Database
 brew "libpq"
-brew "neonctl"
 
 # Cloud & DevOps
 brew "cloudflared"
