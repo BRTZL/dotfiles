@@ -1,0 +1,212 @@
+#!/bin/bash
+#
+# agent-notify — send one consistent phone notification (ntfy, Android app).
+#
+# Coding agents call this instead of curl, so every notification has the
+# same shape: one emoji tag, a short title, a one-line body, an agent icon.
+# The rules for *when* to send live in ~/.dotfiles/agents/core.md.
+#
+# Usage:
+#   agent-notify <kind> <title> <body> [options]
+#
+#   kind    done | ask | fail | urgent | build-ok | build-fail
+#   title   "<project>: <outcome>", max 32 characters, plain ASCII
+#   body    one line, max 90 characters
+#
+# Options:
+#   --url <url>               open this when tapped (also adds an "Open" button)
+#   --action "<Label>=<url>"  one extra button
+#   --image <file.png>        attach a screenshot, shown inline on Android
+#   --dry-run                 print the request instead of sending it
+#
+# Example:
+#   agent-notify done "myapp: login flow done" "Tests pass. Review PR #12." --url https://...
+#
+# Environment:
+#   AGENT_NTFY_TOPIC   topic to send to (default: read from ~/.dotfiles/.env)
+#   AGENT_NAME         claude | codex, picks the icon (default: auto-detect)
+#   DOTFILES_ENV       other .env file to read the topic from
+
+set -euo pipefail
+export LC_ALL=en_US.UTF-8   # so ${#var} counts characters, not bytes
+
+
+# ── Settings ─────────────────────────────────────────────────────────────
+
+ENV_FILE="${DOTFILES_ENV:-$HOME/.dotfiles/.env}"           # git-ignored
+STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/agent-notify"   # duplicate check
+DEDUP_SECONDS=600                                          # 10 minutes
+MAX_TITLE=32   # longer titles get cut off next to the timestamp on Android
+MAX_BODY=90    # longer bodies get cut off in the collapsed notification
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────
+
+# Print an error and stop. Exit code 2 means "fix your input".
+die() {
+    echo "agent-notify: $*" >&2
+    exit 2
+}
+
+# True when the text holds only printable ASCII (no emoji, no accents).
+is_ascii() {
+    local LC_ALL=C   # compare raw bytes
+    [[ ! $1 =~ [^\ -~] ]]
+}
+
+# Turn newlines and tabs into spaces, squeeze repeats, trim the ends.
+one_line() {
+    printf '%s' "$1" | tr '\n\t' '  ' | sed 's/  */ /g; s/^ //; s/ $//'
+}
+
+
+# ── 1. Read the topic ────────────────────────────────────────────────────
+
+# Env var wins; otherwise take the last AGENT_NTFY_TOPIC= line in .env,
+# stripping quotes and spaces.
+TOPIC="${AGENT_NTFY_TOPIC:-$(
+    sed -n 's/^AGENT_NTFY_TOPIC=//p' "$ENV_FILE" 2>/dev/null | tail -1 | tr -d "\"' " || true
+)}"
+[ -n "$TOPIC" ] || die "no topic. Set AGENT_NTFY_TOPIC in $ENV_FILE (copy .env.example)."
+
+
+# ── 2. Parse arguments ───────────────────────────────────────────────────
+
+[ $# -ge 3 ] || die "usage: agent-notify <done|ask|fail|urgent|build-ok|build-fail> <title> <body> [--url u] [--action 'Label=url'] [--image f] [--dry-run]"
+
+kind=$1
+title=$(one_line "$2")
+body=$(one_line "$3")
+shift 3
+
+url=""
+action=""
+image=""
+dry_run=0
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --url)     [ $# -ge 2 ] || die "--url needs a value";    url=$2;    shift 2 ;;
+        --action)  [ $# -ge 2 ] || die "--action needs a value"; action=$2; shift 2 ;;
+        --image)   [ $# -ge 2 ] || die "--image needs a value";  image=$2;  shift 2 ;;
+        --dry-run) dry_run=1; shift ;;
+        *)         die "unknown option: $1" ;;
+    esac
+done
+
+
+# ── 3. Kind -> emoji tag and priority ────────────────────────────────────
+#
+# Priority on Android: 3 = normal, 4 = pops up on screen, 5 = urgent.
+
+case $kind in
+    done)       tag=white_check_mark; priority=3 ;;
+    ask)        tag=question;         priority=4 ;;
+    fail)       tag=x;                priority=4 ;;
+    urgent)     tag=rotating_light;   priority=5 ;;
+    build-ok)   tag=rocket;           priority=3 ;;
+    build-fail) tag=x;                priority=4 ;;
+    *)          die "kind must be done|ask|fail|urgent|build-ok|build-fail, got '$kind'" ;;
+esac
+
+
+# ── 4. Check title and body ──────────────────────────────────────────────
+
+[ ${#title} -le $MAX_TITLE ] || die "title is ${#title} chars, max $MAX_TITLE: '$title'. Shorten it."
+[ ${#body} -le $MAX_BODY ]   || die "body is ${#body} chars, max $MAX_BODY. Shorten it."
+
+case $title in
+    *:*) ;;
+    *)   die "title must be '<project>: <outcome>', got '$title'" ;;
+esac
+
+# Only printable ASCII in the title: the tag already adds the emoji.
+is_ascii "$title" || die "title must be plain ASCII (no emoji); the tag adds the emoji"
+
+
+# ── 5. Icon: which agent is sending ──────────────────────────────────────
+
+if [ -n "${AGENT_NAME:-}" ]; then
+    agent=$AGENT_NAME
+elif [ "${CLAUDECODE:-}" = 1 ]; then   # Claude Code sets CLAUDECODE=1
+    agent=claude
+else
+    agent=codex
+fi
+
+case $agent in
+    claude) icon=https://github.com/anthropics.png ;;
+    codex)  icon=https://github.com/openai.png ;;
+    *)      icon="" ;;
+esac
+
+
+# ── 6. Buttons ───────────────────────────────────────────────────────────
+#
+# ntfy format: "view, <Label>, <url>; view, <Label>, <url>"
+
+actions=""
+
+if [ -n "$url" ]; then
+    actions="view, Open, $url"
+fi
+
+if [ -n "$action" ]; then
+    label=${action%%=*}    # text before the first "="
+    target=${action#*=}    # text after it
+    [ "$label" != "$action" ] || die "--action must be 'Label=url'"
+    actions="${actions:+$actions; }view, $label, $target"
+fi
+
+
+# ── 7. Skip duplicates ───────────────────────────────────────────────────
+#
+# Same topic + kind + title within DEDUP_SECONDS is dropped. Each sent
+# notification leaves a timestamp file named after a hash of those three.
+
+mkdir -p "$STATE_DIR"
+key=$(printf '%s|%s|%s' "$TOPIC" "$kind" "$title" | shasum | cut -c1-16)
+stamp_file="$STATE_DIR/$key"
+now=$(date +%s)
+
+if [ -f "$stamp_file" ] && [ $((now - $(cat "$stamp_file"))) -lt $DEDUP_SECONDS ]; then
+    echo "agent-notify: skipped duplicate of '$title' sent <10 min ago"
+    exit 0
+fi
+
+
+# ── 8. Build the request ─────────────────────────────────────────────────
+
+curl_args=(
+    -sS --fail -o /dev/null -w '%{http_code}'
+    -H "Title: $title"
+    -H "Tags: $tag"
+    -H "Priority: $priority"
+)
+[ -z "$icon" ]    || curl_args+=(-H "Icon: $icon")
+[ -z "$url" ]     || curl_args+=(-H "Click: $url")
+[ -z "$actions" ] || curl_args+=(-H "Actions: $actions")
+
+if [ -n "$image" ]; then
+    # With an attachment, the file is the request body and the text
+    # moves into the Message header.
+    [ -f "$image" ] || die "image not found: $image"
+    curl_args+=(-T "$image" -H "Filename: $(basename "$image")" -H "Message: $body")
+else
+    curl_args+=(--data-binary "$body")
+fi
+
+
+# ── 9. Send (or print, with --dry-run) ───────────────────────────────────
+
+if [ $dry_run = 1 ]; then
+    echo "DRY RUN (topic hidden):"
+    printf '  %q\n' "${curl_args[@]}"
+    exit 0
+fi
+
+http_code=$(curl "${curl_args[@]}" "https://ntfy.sh/$TOPIC") \
+    || die "send failed (HTTP ${http_code:-none})"
+
+echo "$now" > "$stamp_file"
+echo "agent-notify: sent ($kind, HTTP $http_code)"
