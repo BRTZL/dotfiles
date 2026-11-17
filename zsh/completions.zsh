@@ -16,4 +16,4 @@ _opencode_yargs_completions() {
 compdef _opencode_yargs_completions opencode
 
 # bun completions
-[ -s "/Users/bartuozel/.bun/_bun" ] && source "/Users/bartuozel/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

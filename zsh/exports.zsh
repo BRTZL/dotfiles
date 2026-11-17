@@ -32,5 +32,11 @@ esac
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# Local binaries
-export PATH="$PATH:$HOME/.local/bin"
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# Maestro
+export PATH="$PATH:$HOME/.maestro/bin"
+
+# Local binaries (first, so ~/.local/bin wins)
+export PATH="$HOME/.local/bin:$PATH"
