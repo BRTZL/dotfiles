@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  .viz { display: grid; gap: 12px; }
+  .takeaway { font-weight: 600; font-size: 15px; color: var(--foreground); }
+  .note { font-size: 12px; color: var(--muted-foreground); }
+  /* Horizontal bars in CSS grid: text never scales, works from 320px to 1144px. */
+  .bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 8px 12px; align-items: center; }
+  .name { font-size: 13px; color: var(--foreground); }
+  .track { height: 22px; }
+  .bar { height: 100%; border-radius: 4px; background: var(--chart-1); min-width: 2px; }
+  .bar.c2 { background: var(--chart-2); } .bar.c3 { background: var(--chart-3); }
+  .bar.c4 { background: var(--chart-4); } .bar.c5 { background: var(--chart-5); } .bar.c6 { background: var(--chart-6); }
+  .bar.dim { background: var(--muted-foreground); opacity: .45; }
+  .val { font-size: 12px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; text-align: right; }
+</style>
+</head>
+<body>
+<div class="viz">
+  <div class="takeaway">Build time dropped 38% after caching</div>
+  <div class="bars" id="bars"></div>
+  <div class="note">Median of 20 CI runs on main, Nov 2026.</div>
+</div>
+<script>
+// Data: edit these. cls: "" (chart-1), "c2".."c6", or "dim" for context rows. Sort by value unless order means something.
+const rows = [
+  { name: "Before", value: 7.0, cls: "dim" },
+  { name: "After",  value: 4.3, cls: "" },
+];
+const fmt = v => v.toFixed(1) + "m";
+const max = Math.max(...rows.map(r => r.value));
+document.getElementById("bars").innerHTML = rows.map(r =>
+  `<div class="name">${r.name}</div>
+   <div class="track"><div class="bar ${r.cls}" style="width:${(r.value / max * 100).toFixed(1)}%"></div></div>
+   <div class="val">${fmt(r.value)}</div>`).join("");
+</script>
+</body>
+</html>

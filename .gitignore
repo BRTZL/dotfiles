@@ -1,0 +1,9 @@
+# Local secrets and machine-specific values. Never commit .env.
+.env
+
+# Third-party skills: listed in agents/third-party-skills.txt, installed by agents/install-skills.sh
+agents/skills/grill-me/
+agents/skills/stageshow/
+agents/skills/subagent-driven-development/
+agents/skills/**/node_modules/
+.DS_Store

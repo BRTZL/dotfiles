@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  .viz { display: grid; gap: 12px; }
+  .takeaway { font-weight: 600; font-size: 15px; color: var(--foreground); }
+  .note { font-size: 12px; color: var(--muted-foreground); }
+  .chart { position: relative; }
+  svg { width: 100%; height: 260px; display: block; overflow: visible; }
+  .grid line { stroke: var(--border); }
+  .axis text { fill: var(--muted-foreground); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .line.s1 { stroke: var(--chart-1); } .line.s2 { stroke: var(--chart-2); } .line.s3 { stroke: var(--chart-3); }
+  .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .end { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .end.s1 { fill: var(--chart-1); } .end.s2 { fill: var(--chart-2); } .end.s3 { fill: var(--chart-3); }
+  .hover { stroke: var(--muted-foreground); stroke-dasharray: 3 3; }
+  .tip { position: absolute; pointer-events: none; background: var(--popover); color: var(--popover-foreground);
+         border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 8px; font-size: 12px;
+         font-variant-numeric: tabular-nums; white-space: nowrap; display: none; }
+</style>
+</head>
+<body>
+<div class="viz">
+  <div class="takeaway">p95 latency regressed after v2.3</div>
+  <div class="chart">
+    <svg id="svg" role="img" aria-label="Line chart"></svg>
+    <div class="tip" id="tip"></div>
+  </div>
+  <div class="note">p95 in ms, daily, production.</div>
+</div>
+<script>
+// Data: edit these. Up to ~6 series; colours come from --chart-N.
+const labels = ["Nov 10","Nov 11","Nov 12","Nov 13","Nov 14","Nov 15","Nov 16"];
+const series = [
+  { name: "api",    values: [120,118,124,190,205,198,210] },
+  { name: "search", values: [ 80, 82, 79, 85, 88, 86, 90] },
+];
+const unit = "ms";
+
+const svg = document.getElementById("svg"), tip = document.getElementById("tip");
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; }
+
+function draw() {
+  svg.innerHTML = "";
+  const W = svg.clientWidth, H = 260, L = 40, R = 64, T = 12, B = 24;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const raw = Math.max(...series.flatMap(s => s.values));
+  const mag = 10 ** Math.floor(Math.log10(raw / 4)), stepV = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map(m => m * mag).find(st => st * 4 >= raw);
+  const max = stepV * 4; // nice round ticks
+  const x = i => L + i * (W - L - R) / (labels.length - 1);
+  const y = v => T + (H - T - B) * (1 - v / max);
+  const grid = el("g", { class: "grid" }, svg), axis = el("g", { class: "axis" }, svg);
+  for (let k = 0; k <= 4; k++) {
+    const v = max * k / 4;
+    el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v) }, grid);
+    el("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }, axis).textContent = Math.round(v);
+  }
+  const step = Math.ceil(labels.length / Math.max(2, Math.floor((W - L - R) / 70)));
+  labels.forEach((l, i) => { if (i % step === 0 || i === labels.length - 1)
+    el("text", { x: x(i), y: H - 6, "text-anchor": "middle" }, axis).textContent = l; });
+  series.forEach((s, j) => {
+    const c = "s" + (j + 1);
+    el("path", { class: "line " + c, d: s.values.map((v, i) => (i ? "L" : "M") + x(i) + " " + y(v)).join("") }, svg);
+    const last = s.values.length - 1;
+    el("text", { class: "end " + c, x: x(last) + 6, y: y(s.values[last]) + 4 }, svg).textContent = s.name;
+  });
+  const hover = el("line", { class: "hover", y1: T, y2: H - B, visibility: "hidden" }, svg);
+  svg.onmousemove = e => {
+    const r = svg.getBoundingClientRect(), px = e.clientX - r.left;
+    const i = Math.max(0, Math.min(labels.length - 1, Math.round((px - L) / ((W - L - R) / (labels.length - 1)))));
+    hover.setAttribute("x1", x(i)); hover.setAttribute("x2", x(i)); hover.setAttribute("visibility", "visible");
+    tip.innerHTML = `<b>${labels[i]}</b><br>` + series.map(s => `${s.name}: ${s.values[i]}${unit}`).join("<br>");
+    tip.style.display = "block";
+    tip.style.left = Math.min(x(i) + 10, W - tip.offsetWidth) + "px"; tip.style.top = "10px";
+  };
+  svg.onmouseleave = () => { hover.setAttribute("visibility", "hidden"); tip.style.display = "none"; };
+}
+draw();
+new ResizeObserver(draw).observe(svg);
+</script>
+</body>
+</html>

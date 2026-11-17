@@ -1,0 +1,7 @@
+interface:
+  display_name: "TL;DR"
+  short_description: "Status card, or ADHD mode with $tldr on"
+  default_prompt: "Use $tldr to give me a one-screen status card of where we are."
+
+policy:
+  allow_implicit_invocation: false

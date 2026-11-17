@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  /* No html/body background, padding, border, or vh units. T3 paints the page and adds an 8px gutter. */
+  .viz { display: grid; gap: 12px; }
+  .takeaway { font-weight: 600; font-size: 15px; color: var(--foreground); }
+  .note { font-size: 12px; color: var(--muted-foreground); }
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+</style>
+</head>
+<body>
+<div class="viz">
+  <div class="takeaway">One-line takeaway</div>
+  <!-- chart / diagram here: fixed px height, width:100% -->
+  <div class="note">Source and scope of the data.</div>
+</div>
+</body>
+</html>

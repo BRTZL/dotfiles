@@ -1,0 +1,7 @@
+# Skills from other people's GitHub repos.
+# install-skills.sh installs these; they stay git-ignored (see .gitignore).
+#
+# <github owner/repo>        <skill name>
+mattpocock/skills            grill-me
+benjitaylor/skills           stageshow
+obra/superpowers             subagent-driven-development

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  .viz { display: grid; gap: 12px; }
+  .takeaway { font-weight: 600; font-size: 15px; color: var(--foreground); }
+  .note { font-size: 12px; color: var(--muted-foreground); }
+  /* Horizontal flow on desktop, vertical under 520px. Pure CSS, no SVG coords to maintain. */
+  .flow { display: flex; align-items: stretch; gap: 0; }
+  .node { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+          padding: 12px 14px; min-width: 0; }
+  .node.accent { border-color: var(--chart-1); }
+  .node h4 { margin: 0 0 4px; font-size: 13px; color: var(--foreground); }
+  .node p { margin: 0; font-size: 12px; color: var(--muted-foreground); }
+  .node code { font-size: 11px; }
+  .arrow { flex: 0 0 32px; display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); }
+  .arrow svg { width: 20px; height: 20px; }
+  .arrow path { stroke: currentColor; fill: none; stroke-width: 1.5; }
+  @media (max-width: 520px) {
+    .flow { flex-direction: column; }
+    .arrow { flex-basis: 24px; transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="viz">
+  <div class="takeaway">Request path through the gateway</div>
+  <div class="flow">
+    <div class="node"><h4>Client</h4><p>Sends <code>POST /run</code></p></div>
+    <div class="arrow"><svg viewBox="0 0 20 20"><path d="M3 10h13M11 5l5 5-5 5"/></svg></div>
+    <div class="node accent"><h4>Gateway</h4><p>Auth, rate limit</p></div>
+    <div class="arrow"><svg viewBox="0 0 20 20"><path d="M3 10h13M11 5l5 5-5 5"/></svg></div>
+    <div class="node"><h4>Worker</h4><p>Runs job, writes result</p></div>
+  </div>
+  <div class="note">Accent border marks the component that changed.</div>
+</div>
+</body>
+</html>
