@@ -6,7 +6,12 @@ My macOS dotfiles.
 
 ```
 ~/.dotfiles/
+├── agents/                  # Source for ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md (run agents/build.sh)
+│   ├── skills/              # Shared skills, linked into Claude and Codex (run agents/link-skills.sh)
+│   └── third-party-skills.txt  # Skills from other repos, installed by agents/install-skills.sh
 ├── Brewfile                 # Homebrew packages
+├── bin/agent-notify         # ntfy push for coding agents (topic from .env)
+├── .env.example             # Copy to .env (git-ignored) for local secrets
 ├── config/ghostty/config    # Ghostty terminal config
 ├── git/.gitconfig           # Git configuration
 ├── git/.gitignore_global    # Global gitignore
