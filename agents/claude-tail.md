@@ -1,6 +1,6 @@
 ## Subagent models
 
-Never use Fable (any `claude-fable-*` model, `model: "fable"`) for a subagent or delegated task; it burns my usage. Use the latest Opus, raising reasoning effort when the task needs it. When the T3 "Claude (backup)" provider (`claudeAgent_backup`) is available, run Claude implementer subagents there via `delegate_task`.
+Never use Fable (any `claude-fable-*` model, `model: "fable"`) for a subagent or delegated task; it burns my usage. Use the latest Opus, raising reasoning effort when the task needs it.
 
 ## Reviews
 
