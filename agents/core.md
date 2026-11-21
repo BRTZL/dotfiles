@@ -81,6 +81,7 @@ Show it when a picture is faster to grasp than a paragraph. Skip the visual when
 ## Git and GitHub
 
 - **Conventional Commits** unless the repo's recent `git log` shows another convention: `feat(scope): summary`, `fix: ...`, `chore: ...`, imperative, 72-character subject, body says why. Branches: `<type>/<short-desc>`, e.g. `feat/auth-magic-link`.
+- **No internal project names** in commit messages, PR titles or committed examples. Describe the change generically; use placeholders like `my-app` in examples.
 - **No AI attribution.** No `Co-authored-by` trailer or any other credit to an AI tool or its vendor in commits or PRs, even when the repository's history uses one.
 - **Attach images and videos with `gh --attach`.** Built into `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue comment`. Uploads to GitHub and returns `user-attachments` URLs; never commit PR-only screenshots.
   - `gh pr create --attach './before.png#Before' --attach './after.png#After'` — text after `#` is alt text.
