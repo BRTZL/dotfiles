@@ -22,7 +22,7 @@ Why (keep this): my working memory is small, starting is the hardest part, vague
 - Drop articles, filler (just/really/basically), pleasantries, and hedging. Fragments are fine. Prefer short words (fix, not "implement a solution for").
 - Keep verbatim: code, error strings, API names, CLI commands, and commit-type keywords.
 - Reply in English always, even when I write in Turkish, unless I explicitly ask for a Turkish reply.
-- Never: invented abbreviations (cfg/impl/req), causal arrows ("A → B" in prose), self-reference (talking about yourself: "I'll now...", "Let me...", "As an AI"; or pointing back at earlier text: "as mentioned above", "as I said earlier"), recaps, tool-call narration, emoji (ntfy notifications excepted), raw log dumps (quote the shortest decisive line). Tables only to compare several items across the same attributes.
+- Never: invented abbreviations (cfg/impl/req), causal arrows ("A → B" in prose), self-reference (talking about yourself: "I'll now...", "Let me...", "As an AI"; or pointing back at earlier text: "as mentioned above", "as I said earlier"), recaps, tool-call narration, emoji (phone notifications excepted), raw log dumps (quote the shortest decisive line). Tables only to compare several items across the same attributes.
 - "normal mode" reverts density to plain sentences. Structure rules stay on.
 
 Example: "Bug in auth middleware. Expiry check uses `<` not `<=`. Fix:" — not "Sure! The issue is likely caused by..."
@@ -87,24 +87,54 @@ Show it when a picture is faster to grasp than a paragraph. Skip the visual when
   - A body reference like `![alt](./before.png)` is rewritten to the uploaded URL; unreferenced files are appended.
   - Needs write access to the target repository. For a fork PR without upstream write access: attach to an issue on my fork (`gh issue create -R <me>/<fork> --attach ...`), read the URLs from the issue body, embed them in the upstream PR body, then close the issue.
 
-## Notifications (ntfy)
+## Notifications (Pocket Notifier)
 
-Send phone notifications only with `agent-notify`. It sets the tag, priority, icon and Android formatting, rejects bad input, and drops a repeat within 10 minutes. Never call ntfy with `curl` directly and never print the topic.
+Phone notifications go through the **pocket-notifier** MCP server (`https://notifier.bartuozel.com/api/mcp`). Load the `pocket-notifier` skill at the start of any working session where its tools are available: it has the full rules, milestone examples and what to attach. Fall back to `agent-notify` (ntfy, see its `--help`) only when the pocket-notifier tools are missing, need authentication, or fail twice.
 
-**When: only these, at most one per turn, as the turn's last action.** Only the top-level agent I am talking to sends; subagents and delegated tasks report to their parent instead.
+### The model
 
-| Trigger | Kind |
+| Level | What it is | On my phone |
+|---|---|---|
+| **Project** | A product or repo I work on: `notifier`, `my-app`. `name` = lowercase slug, usually the repo folder; `displayName` = human name. | A project in the Projects tab; I can mute it. |
+| **Feature** | One workstream inside a project: `mvp`, `login-flow`, `cache-layer`. Has a status: `active` → `done` (merged or shipped) → `archived`. | One chat thread. Every message about that workstream stacks there, newest at the bottom. |
+| *(no feature)* | Project-wide news: deploys, CI, releases, incidents. | The project's own thread. |
+| *(no project)* | Only for things that belong to no repo. | My private General project. |
+
+Pick the feature by **workstream, not by message**: one feature per thing I would track as a ticket or branch. Many notifications per feature is the goal; a new feature per notification is wrong.
+
+### Workflow
+
+1. **First send in a session:** `list_projects`. If the repo's project is missing, `create_project` (`name` = repo slug, `displayName`, one-line `description`).
+2. **Choose the feature:** `list_features` for that project (default: `active`). Reuse the one that matches the current work (match on name and description). If none fits, pass a new short `feature` name in `send_notification` (it is created on first use), or `create_feature` first when a description helps me.
+3. **Keep it:** use the same feature for the whole workstream, across sessions.
+4. **Close it:** when the work is merged or shipped, `update_feature_status` → `done` (after the final "done" notification).
+
+### When: only these
+
+Only the top-level agent I am talking to sends; subagents and delegated tasks report to their parent instead.
+
+| Trigger | `send_notification` |
 |---|---|
-| Task I asked for is done and verified | `done` |
-| Blocked on my decision (an `AskUserQuestion` is open) | `ask` |
-| Failure you cannot fix yourself | `fail` (`urgent` only if prod or data is at risk) |
-| Build, deploy or CI run that took 5+ min has ended | `build-ok` or `build-fail` |
+| Milestone done: a plan step, verified subagent result, passing component, closing commit or review result (tasks over ~10 min only) | `priority: 2`, `tags: ["milestone"]`, title like `Step 3/5: API wired` |
+| Task I asked for is done and verified | `priority: 3`, `tags: ["done"]` |
+| Blocked on my decision (an `AskUserQuestion` is open) | `priority: 4`, `tags: ["ask"]`, `ask: { question, quickReplies: [the 2-3 options], allowText: true }` |
+| Failure you cannot fix yourself | `priority: 4`, `tags: ["fail"]` (`priority: 5` only if prod or data is at risk) |
+| Build, deploy or CI run that took 5+ min has ended | `priority: 3` ok / `4` failed, `tags: ["build"]`; project-level (no feature) unless it belongs to one workstream |
 
-**Never for:** plain Q&A, turns under ~2 minutes, step or progress updates, something starting, subagent or retry events.
+No limit per turn: send whenever a status update matters to me (a milestone landed, something broke, you need me, it shipped). The test is "would I want to know this now?", not how many you have sent. Each one carries something measurable: step 3/5, 42 tests pass, p95 480ms to 90ms, PR #12 open, deploy live. No measurable result, no notification.
 
-```sh
-agent-notify done "myapp: login flow done" "Magic-link login works, tests pass. Review PR #12." --url <pr-url>
+**Never for:** plain Q&A, turns under ~2 minutes, raw progress ("50% done", "still working"), something starting, subagent or retry events.
+
+### Content
+
+- `title`: the outcome only (project and feature already show), 32 characters max.
+- `body`: one line, 90 characters max, result first, my next step last.
+- `url`: the PR, CI run or T3 thread link. It shows as an Open button; tapping the notification opens the thread in the app.
+- Never put secrets in any field.
+- My replies to an `ask` are recorded on my phone, not returned to you; I answer you here.
+
+```json
+{ "project": "notifier", "feature": "mvp", "title": "MCP sign-in fixed",
+  "body": "OAuth works in real browsers, tests pass. Authenticate in /mcp.",
+  "priority": 3, "tags": ["done"], "url": "<pr-or-thread-url>" }
 ```
-
-Title `<project>: <outcome>`, 32 characters max, plain ASCII. Body one line, 90 characters max, result first, my next step last. Options: `--url`, `--action "Logs=<url>"`, `--image shot.png` for finished UI work. If it exits non-zero, fix the input it names and resend once.
-
